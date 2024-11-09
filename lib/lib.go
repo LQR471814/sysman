@@ -16,10 +16,6 @@ func init() {
 	}
 }
 
-func Mkdir(path string) {
-
-}
-
 func WriteFile(path string, data []byte, perm fs.FileMode) error {
 	slog.Info(
 		"write",
@@ -33,6 +29,11 @@ func WriteFile(path string, data []byte, perm fs.FileMode) error {
 func RmFile(path string) error {
 	slog.Info("rm", "path", path)
 	return os.Remove(path)
+}
+
+func RmDir(path string) error {
+	slog.Info("rm -rf", "path", path)
+	return os.RemoveAll(path)
 }
 
 func Cmd(name string, args ...string) error {

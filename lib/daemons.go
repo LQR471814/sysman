@@ -28,7 +28,8 @@ WorkingDirectory=%[3]s
 [Install]
 WantedBy=default.target`
 
-var servicesDir = filepath.Join(HOME, ".config/systemd/user")
+var systemdDir = filepath.Join(HOME, ".config/systemd/user")
+var servicesDir = filepath.Join(HOME, "services")
 
 func createDaemon(daemon Daemon) error {
 	wd := filepath.Join(HOME, "services", daemon.Id)
@@ -47,9 +48,9 @@ func createDaemon(daemon Daemon) error {
 
 	serviceName := fmt.Sprintf("sysman.%s.service", daemon.Id)
 
-	err = Write(
+	err = WriteFile(
 		filepath.Join(
-			servicesDir,
+			systemdDir,
 			serviceName,
 		),
 		[]byte(daemonFile),
@@ -72,7 +73,7 @@ func createDaemon(daemon Daemon) error {
 }
 
 func removeOldDaemons() error {
-	entries, err := os.ReadDir(servicesDir)
+	entries, err := os.ReadDir(systemdDir)
 	if err != nil {
 		return err
 	}
@@ -102,22 +103,34 @@ func removeOldDaemons() error {
 			return err
 		}
 
+		err = RmFile(filepath.Join(systemdDir, e.Name()))
+		if err != nil {
+			return err
+		}
+		rmdir := filepath.Join(servicesDir, id)
+		err = RmDir(rmdir)
+		if err != nil {
+			slog.Warn("remove corresponding service dir", "dir", rmdir, "err", err)
+		}
 	}
 
 	return nil
 }
 
 func SyncDaemons(ctx context.Context, daemons []Daemon) error {
-	err := os.Mkdir(filepath.Join(HOME, "services"), 0777)
+	err := os.Mkdir(servicesDir, 0777)
 	if err != nil {
-		return err
+		return fmt.Errorf("mkdir ~/services: %w", err)
 	}
-	err = os.MkdirAll(servicesDir, 0777)
+	err = os.MkdirAll(systemdDir, 0777)
 	if err != nil {
-		return err
+		return fmt.Errorf("mkdir ~/.config/systemd/user: %w", err)
 	}
 
-	// remove existing
+	err = removeOldDaemons()
+	if err != nil {
+		return fmt.Errorf("remove old daemons: %w", err)
+	}
 
 	for _, d := range daemons {
 		err = createDaemon(d)
