@@ -1,6 +1,7 @@
 package lib
 
 import (
+	"context"
 	"io/fs"
 	"log/slog"
 	"os"
@@ -16,8 +17,9 @@ func init() {
 	}
 }
 
-func WriteFile(path string, data []byte, perm fs.FileMode) error {
-	slog.Info(
+func WriteFile(ctx context.Context, path string, data []byte, perm fs.FileMode) error {
+	slog.InfoContext(
+		ctx,
 		"write",
 		"path", path,
 		"bytes_written", len(data),
@@ -26,18 +28,18 @@ func WriteFile(path string, data []byte, perm fs.FileMode) error {
 	return os.WriteFile(path, data, perm)
 }
 
-func RmFile(path string) error {
-	slog.Info("rm", "path", path)
+func RmFile(ctx context.Context, path string) error {
+	slog.DebugContext(ctx, "rm", "path", path)
 	return os.Remove(path)
 }
 
-func RmDir(path string) error {
-	slog.Info("rm -rf", "path", path)
+func RmDir(ctx context.Context, path string) error {
+	slog.DebugContext(ctx, "rm -rf", "path", path)
 	return os.RemoveAll(path)
 }
 
-func Cmd(name string, args ...string) error {
-	slog.Info("running command", "name", name, "args", args)
+func Cmd(ctx context.Context, name string, args ...string) error {
+	slog.DebugContext(ctx, "running command", "name", name, "args", args)
 
 	cmd := exec.Command(name, args...)
 	cmd.Stdin = os.Stdin
