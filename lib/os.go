@@ -38,6 +38,11 @@ func RmDir(ctx context.Context, path string) error {
 	return os.RemoveAll(path)
 }
 
+func Symln(ctx context.Context, src, dst string) error {
+	slog.DebugContext(ctx, "ln -s", "src", src, "dst", dst)
+	return os.Symlink(src, dst)
+}
+
 func Cmd(ctx context.Context, name string, args ...string) error {
 	slog.DebugContext(ctx, "running command", "name", name, "args", args)
 
