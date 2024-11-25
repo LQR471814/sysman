@@ -5,7 +5,9 @@ import (
 	"fmt"
 	"log/slog"
 	"os"
+	"os/exec"
 	"path/filepath"
+	"regexp"
 )
 
 func init() {
@@ -24,6 +26,27 @@ type Daemon struct {
 	Id          string
 	Description string
 	ExecStart   string
+}
+
+var unitFilesListRe = regexp.MustCompile(`^([\w\-\\\.\@]+) +(?:[\w\-\\\.\@]+) +(?:[\w\-\\\.\@]+)$`)
+
+func (d Daemon) Exists(ctx context.Context) (bool, error) {
+	cmd := exec.Command("systemctl", "--user", "list-unit-files")
+	contents, err := cmd.Output()
+	if err != nil {
+		return false, err
+	}
+	matchList := unitFilesListRe.FindAllStringSubmatch(string(contents), 0)
+	for _, groups := range matchList {
+		if len(groups) != 2 {
+			continue
+		}
+		unit := groups[1]
+		if unit == d.Id+".service" {
+			return true, nil
+		}
+	}
+	return false, nil
 }
 
 func (d Daemon) Create(ctx context.Context) error {

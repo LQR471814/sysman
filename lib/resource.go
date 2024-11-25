@@ -10,6 +10,7 @@ import (
 
 // A "resource" must be json serializable/unserializable
 type Resource interface {
+	Exists(ctx context.Context) (bool, error)
 	Create(ctx context.Context) error
 	Delete(ctx context.Context) error
 
